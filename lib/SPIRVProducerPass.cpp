@@ -257,8 +257,7 @@ struct SPIRVProducerPass final : public ModulePass {
     Ptr = this;
   }
 
-  virtual ~SPIRVProducerPass() {
-  }
+  virtual ~SPIRVProducerPass() {}
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<DominatorTreeWrapperPass>();
@@ -3321,6 +3320,9 @@ SPIRVProducerPass::GenerateImageInstruction(CallInst *Call,
       Value *Image = Call->getArgOperand(0);
       Value *Sampler = Call->getArgOperand(1);
       Value *Coordinate = Call->getArgOperand(2);
+      Value *Lod = Call->getNumArgOperands() > 3 ? 
+        Call->getArgOperand(3) : 
+        ConstantFP::get(Context, APFloat(0.0f));
 
       TypeMapType &OpImageTypeMap = getImageTypeMap();
       Type *ImageTy = Image->getType()->getPointerElementType();
@@ -3349,9 +3351,8 @@ SPIRVProducerPass::GenerateImageInstruction(CallInst *Call,
         result_type = getSPIRVType(Call->getType());
       }
 
-      Constant *CstFP0 = ConstantFP::get(Context, APFloat(0.0f));
       Ops << result_type << SampledImageID << Coordinate
-          << spv::ImageOperandsLodMask << CstFP0;
+          << spv::ImageOperandsLodMask << Lod;
 
       RID = addSPIRVInst(spv::OpImageSampleExplicitLod, Ops);
 
